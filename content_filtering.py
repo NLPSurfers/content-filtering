@@ -10,14 +10,13 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel, cosine_similarity
 import time
 import datetime
-from preprocess import file2csv
-
-
+from preprocess import generate_stop_words, tokenize
 
 
 def preprocess_query(input_str):
     
-    sent_words = list(jieba.cut(input_str))
+    stop_word_list=generate_stop_words()
+    sent_words = tokenize(input_str,stop_word_list)
     document = " ".join(sent_words)
     
     return document
@@ -32,26 +31,28 @@ def main_input_rank(input_str="牛肉麵", top_n=10):
     
     def get_item_descr(id):
         return df.loc[df['id'] == id]['description_orig'].tolist()[0]
+        # return df.loc[df['id'] == id]['description'].tolist()[0]
         
     def get_item_url(id):
         return df.loc[df['id'] == id]['url'].tolist()[0]
     
     
     def recommend(input_str, top_n):
-        url_list=[]
+        res_list=[]
         print("Recommending top " + str(top_n) + " products based on query: " + input_str)
         print("="*160)
         for order, rec in enumerate(similar_items,1):
-            url_list+=[get_item_url(rec[1])]
+            res_list+=[(rec[0],get_item_url(rec[1]))]
             print("Recommended%d: "%order + get_item_name(rec[1]) + " (score:" + str(np.around(rec[0],6)) + ")" + " /description: " + get_item_descr(rec[1]))
             print("-"*160)
         
-        return url_list
+        return res_list
     
     
     df = pd.read_csv('tripadvisor_data.csv',encoding = 'utf-8-sig')
     
-    tf = TfidfVectorizer(analyzer='word', max_features=200 , ngram_range=(1, 1), min_df=0, max_df = 0.6,stop_words=["是","的","了"],token_pattern=r"(?u)\b\w+\b").fit(df['description'])
+    # tf = TfidfVectorizer(analyzer='word', max_features=200 , ngram_range=(1, 1), min_df=0, max_df = 0.6,stop_words=["是","的","了"],token_pattern=r"(?u)\b\w+\b").fit(df['description'])
+    tf = TfidfVectorizer(analyzer='word', ngram_range=(1, 2), min_df=0, max_df = 1.0,stop_words=["是","的","了"],token_pattern=r"(?u)\b\w+\b").fit(df['description'])
     
     tfidf_matrix = tf.fit_transform(df['description'])
     
@@ -75,9 +76,8 @@ def main_input_rank(input_str="牛肉麵", top_n=10):
 
 
 if __name__ == "__main__":
-    # file2csv() #step1: transform json to csv
     input_str = input("find your favorite restaurant! input query:  ") #step2: do query (specific query, e.g. 牛肉麵 or 燒烤 烤肉 or 火鍋吃到飽...)
-    url_list = main_input_rank(input_str = input_str, top_n = 20)
-    print(url_list)
+    res_list = main_input_rank(input_str = input_str, top_n = 20)
+    print(res_list)
     
     

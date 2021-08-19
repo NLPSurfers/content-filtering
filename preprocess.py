@@ -1,5 +1,4 @@
 # coding=utf-8
-# https://github.com/nikitaa30/Content-based-Recommender-System/blob/master/recommender_system.py
 import pandas as pd
 import numpy as np
 import json
@@ -18,10 +17,35 @@ def read_data():
         data = json.load(f)
     return data
     
+
+def generate_stop_words():
+    stop_word_list = []
+    with open("stopwords1893_cn.txt",'r', encoding = 'utf-8-sig') as f:
+        stop_word_list = [line.strip('\n') for line in f.readlines()]
+        # print(stop_word_list)
+        f.close()
+    return stop_word_list
+
+
+def tokenize(text, stop_word_list):
     
-def file2csv():
+    cut_words = list(jieba.cut(text))
+    
+    new_cut_words = []
+    for word in cut_words:
+        if word not in stop_word_list:
+            new_cut_words.append(word)
+        else:
+            pass
+            
+    return new_cut_words
+
+
+
+def json2csv():
 
     data = read_data()
+    stop_word_list=generate_stop_words()
     
     id_list = []
     url_list = []
@@ -57,15 +81,17 @@ def file2csv():
         text = str1+str2+str3+str4
         description_orig_list += [text]
         
-        sent_words = list(jieba.cut(text))
+        
+        sent_words = tokenize(text,stop_word_list)
         document = " ".join(sent_words)
         description_final_list += [document]
         
         
         
     pd.DataFrame({'id':id_list, 'name':name_list, 'url':url_list, 'description_orig':description_orig_list, 'description':description_final_list}).to_csv('tripadvisor_data.csv',index = False, encoding='utf-8-sig')    
-    
-    
+
+
 
 if __name__ == "__main__":
-    file2csv()
+    json2csv()
+    
