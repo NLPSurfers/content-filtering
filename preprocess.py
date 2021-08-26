@@ -13,7 +13,7 @@ import datetime
 
 def read_data():
     data = []
-    with open('tripadvisor_restaurant_formatted.json', 'r',encoding="utf-8") as f:
+    with open('tripadvisor_restaurant_formatted_henry.json', 'r',encoding="utf-8") as f:
         data = json.load(f)
     return data
     
@@ -60,7 +60,7 @@ def json2csv():
         count += 1
         print(f'progress:{count}/{total_doc}={np.around(count/total_doc*100,2)}%')
         
-        id_list += [_id]
+        id_list += [restaurant_data['asin']]
         url_list += [restaurant_data['url']]
         name_list += [restaurant_data['name']]
         
@@ -88,7 +88,7 @@ def json2csv():
         
         
         
-    pd.DataFrame({'id':id_list, 'name':name_list, 'url':url_list, 'description_orig':description_orig_list, 'description':description_final_list}).to_csv('tripadvisor_data.csv',index = False, encoding='utf-8-sig')    
+    pd.DataFrame({'id':id_list, 'name':name_list, 'url':url_list, 'description_orig':description_orig_list, 'description':description_final_list}).to_csv('tripadvisor_data_henry.csv',index = False, encoding='utf-8-sig')    
 
 
 

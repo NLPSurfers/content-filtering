@@ -24,7 +24,7 @@ def preprocess_query(input_str):
 
 
 # to rank restaurant by query
-def main_input_rank(input_str="牛肉麵", top_n=10):
+def recommend_restaurants(input_str="牛肉麵", top_n=10):
     
     def get_item_name(id):
         return df.loc[df['id'] == id]['name'].tolist()[0]
@@ -42,14 +42,14 @@ def main_input_rank(input_str="牛肉麵", top_n=10):
         print("Recommending top " + str(top_n) + " products based on query: " + input_str)
         print("="*160)
         for order, rec in enumerate(similar_items,1):
-            res_list+=[(rec[0],get_item_url(rec[1]))]
+            res_list+=[(rec[1], rec[0], get_item_url(rec[1]))] # element: (id,score,url)
             print("Recommended%d: "%order + get_item_name(rec[1]) + " (score:" + str(np.around(rec[0],6)) + ")" + " /description: " + get_item_descr(rec[1]))
             print("-"*160)
         
         return res_list
     
     
-    df = pd.read_csv('tripadvisor_data.csv',encoding = 'utf-8-sig')
+    df = pd.read_csv('tripadvisor_data_henry.csv',encoding = 'utf-8-sig')
     
     # tf = TfidfVectorizer(analyzer='word', max_features=200 , ngram_range=(1, 1), min_df=0, max_df = 0.6,stop_words=["是","的","了"],token_pattern=r"(?u)\b\w+\b").fit(df['description'])
     tf = TfidfVectorizer(analyzer='word', ngram_range=(1, 2), min_df=0, max_df = 1.0,stop_words=["是","的","了"],token_pattern=r"(?u)\b\w+\b").fit(df['description'])
@@ -59,8 +59,8 @@ def main_input_rank(input_str="牛肉麵", top_n=10):
     input_str_pre = preprocess_query(input_str)
     time_now = datetime.datetime.now().strftime('%Y%m%d_%H%M%S_data')
     df_input = pd.DataFrame({'datetime':[time_now],'description':[input_str], 'description_preprocess':[input_str_pre]})
-    print('the query info:\n',df_input)
-    print('\n')
+    # print('the query info:\n',df_input)
+    # print('\n')
     
     
     tfidf_matrix_input = tf.transform(df_input['description_preprocess'])
@@ -71,13 +71,15 @@ def main_input_rank(input_str="牛肉麵", top_n=10):
     similar_items = [(cosine_similarities[0][i], df['id'][i]) for i in similar_indices]
     
     
-    return recommend(input_str = input_str, top_n=top_n)
+    return input_str, input_str_pre, recommend(input_str = input_str, top_n=top_n)
     
 
 
 if __name__ == "__main__":
-    input_str = input("find your favorite restaurant! input query:  ") #step2: do query (specific query, e.g. 牛肉麵 or 燒烤 烤肉 or 火鍋吃到飽...)
-    res_list = main_input_rank(input_str = input_str, top_n = 20)
-    print(res_list)
-    
+    input_str = input("find your favorite restaurant! input query:  ") # do query: e.g. 牛肉麵 or 燒肉烤肉CP值高 or 火鍋吃到飽 or 壽司...
+    query, query_pre, res_list = recommend_restaurants(input_str = input_str, top_n = 20)
+    print("-"*80,"Summary","-"*80)
+    print("The input query: {0}\nThe preprocessed query: {1}".format(query, query_pre))
+    print(f"the recommended restaurants from top-1 to top-{len(res_list)}:\n\n",res_list)
+    print("-"*80,"End","-"*80)
     
