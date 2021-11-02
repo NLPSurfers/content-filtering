@@ -1,29 +1,17 @@
 # coding=utf-8
-# https://github.com/nikitaa30/Content-based-Recommender-System/blob/master/recommender_system.py
 import pandas as pd
 import numpy as np
 import json
 import jieba
-from os import listdir
-from os.path import join, basename, dirname
+from os.path import join, basename, dirname, exists
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel, cosine_similarity
 import time
 import datetime
-from preprocess import generate_stop_words, tokenize
+from preprocess import preprocess_query, tokenize, json2csv
 
 
-def preprocess_query(input_str):
-    
-    stop_word_list=generate_stop_words()
-    sent_words = tokenize(input_str,stop_word_list)
-    document = " ".join(sent_words)
-    
-    return document
-        
 
-
-# to rank restaurant by query
 def recommend_restaurants(input_str="牛肉麵", top_n=10):
     
     def get_item_name(id):
@@ -48,8 +36,12 @@ def recommend_restaurants(input_str="牛肉麵", top_n=10):
         
         return res_list
     
+    if not exists('restaurant_embedding.csv'):
+        print('cannot find the local file restaurant_embedding.csv!')
+        print('query database......')
+        json2csv()
     
-    df = pd.read_csv('tripadvisor_data_henry.csv',encoding = 'utf-8-sig')
+    df = pd.read_csv('restaurant_embedding.csv',encoding = 'utf-8-sig')
     
     # tf = TfidfVectorizer(analyzer='word', max_features=200 , ngram_range=(1, 1), min_df=0, max_df = 0.6,stop_words=["是","的","了"],token_pattern=r"(?u)\b\w+\b").fit(df['description'])
     tf = TfidfVectorizer(analyzer='word', ngram_range=(1, 2), min_df=0, max_df = 1.0,stop_words=["是","的","了"],token_pattern=r"(?u)\b\w+\b").fit(df['description'])
@@ -75,8 +67,10 @@ def recommend_restaurants(input_str="牛肉麵", top_n=10):
     
 
 
+
+
 if __name__ == "__main__":
-    input_str = input("find your favorite restaurant! input query:  ") # do query: e.g. 牛肉麵 or 燒肉烤肉CP值高 or 火鍋吃到飽 or 壽司...
+    input_str = input("find your favorite restaurant! input query:  ") # do query: e.g. 牛肉麵 or 燒肉烤肉CP值高 or 火鍋吃到飽 or 便宜水餃店 or 壽司...
     query, query_pre, res_list = recommend_restaurants(input_str = input_str, top_n = 20)
     print("-"*80,"Summary","-"*80)
     print("The input query: {0}\nThe preprocessed query: {1}".format(query, query_pre))
